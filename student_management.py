@@ -1,244 +1,268 @@
+import sqlite3
+
+con = sqlite3.connect("student.db")
+cur = con.cursor()
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS Student(
+    USN TEXT PRIMARY KEY,
+    Name TEXT,
+    Branch TEXT,
+    Phone TEXT
+)
+""")
+
+con.commit()
+
 while True:
 
     print("""
-    ===== STUDENT MANAGEMENT SYSTEM =====
+    ===== STUDENT MANAGEMENT SYSTEM V2.1 =====
 
     1. Add Student
     2. Display Students
-    3. Search Student
-    4. Delete Student
-    5. Update Student
-    6. Count Students
-    7. Display Students by Branch
-    8. Exit
+    3. Search Student by USN
+    4. Search Student by Name
+    5. Delete Student
+    6. Update Student
+    7. Count Students
+    8. Display Students by Branch
+    9. Exit
     """)
 
     try:
-        ch = int(input("Enter your choice: "))
+        ch = int(input("Enter Choice: "))
     except:
-        print("Please enter a valid number")
+        print("Please Enter a Valid Number")
         continue
 
     # ADD STUDENT
     if ch == 1:
 
-        f = open("student.txt", "a")
+        usn = input("Enter USN: ")
+        name = input("Enter Name: ")
+        branch = input("Enter Branch: ")
+        phone = input("Enter Phone: ")
 
-        n = int(input("How many students? "))
+        try:
 
-        for i in range(n):
+            cur.execute(
+                "INSERT INTO Student VALUES(?,?,?,?)",
+                (usn, name, branch, phone)
+            )
 
-            usn = input("Enter USN: ")
-            name = input("Enter Name: ")
-            branch = input("Enter Branch: ")
-            phone = input("Enter Phone: ")
+            con.commit()
 
-            f.write(usn + "," + name + "," + branch + "," + phone + "\n")
+            print("Student Added Successfully")
 
-        f.close()
-
-        print("Student Added Successfully")
+        except:
+            print("USN Already Exists")
 
     # DISPLAY STUDENTS
     elif ch == 2:
 
-        try:
-            f = open("student.txt", "r")
+        cur.execute("SELECT * FROM Student")
+
+        data = cur.fetchall()
+
+        if len(data) == 0:
+
+            print("No Records Found")
+
+        else:
 
             print("\n===== STUDENT RECORDS =====\n")
 
-            for line in f:
-                print(line)
+            for i in data:
 
-            f.close()
+                print("----------------------------")
+                print("USN    :", i[0])
+                print("Name   :", i[1])
+                print("Branch :", i[2])
+                print("Phone  :", i[3])
+                print("----------------------------")
 
-        except:
-            print("No Records Found")
-
-    # SEARCH STUDENT
+    # SEARCH BY USN
     elif ch == 3:
 
-        search_usn = input("Enter USN to Search: ")
+        search_usn = input("Enter USN: ")
 
-        found = False
+        cur.execute(
+            "SELECT * FROM Student WHERE USN=?",
+            (search_usn,)
+        )
 
-        try:
+        data = cur.fetchone()
 
-            f = open("student.txt", "r")
+        if data:
 
-            for line in f:
+            print("\nStudent Found\n")
+            print("USN    :", data[0])
+            print("Name   :", data[1])
+            print("Branch :", data[2])
+            print("Phone  :", data[3])
 
-                data = line.strip().split(",")
+        else:
 
-                if data[0] == search_usn:
+            print("Student Not Found")
 
-                    found = True
+    # SEARCH BY NAME
+    elif ch == 4:
 
-                    print("\nStudent Found")
-                    print("USN    :", data[0])
-                    print("Name   :", data[1])
-                    print("Branch :", data[2])
-                    print("Phone  :", data[3])
+        name = input("Enter Name: ")
 
-            f.close()
+        cur.execute(
+            "SELECT * FROM Student WHERE Name=?",
+            (name,)
+        )
 
-            if found == False:
-                print("Student Not Found")
+        data = cur.fetchall()
 
-        except:
-            print("No Records Found")
+        if len(data) == 0:
+
+            print("Student Not Found")
+
+        else:
+
+            for i in data:
+
+                print("----------------------------")
+                print("USN    :", i[0])
+                print("Name   :", i[1])
+                print("Branch :", i[2])
+                print("Phone  :", i[3])
+                print("----------------------------")
 
     # DELETE STUDENT
-    elif ch == 4:
+    elif ch == 5:
 
         del_usn = input("Enter USN to Delete: ")
 
-        found = False
+        cur.execute(
+            "DELETE FROM Student WHERE USN=?",
+            (del_usn,)
+        )
 
-        try:
+        con.commit()
 
-            f = open("student.txt", "r")
+        if cur.rowcount > 0:
 
-            temp = []
+            print("Record Deleted Successfully")
 
-            for line in f:
+        else:
 
-                data = line.strip().split(",")
-
-                if data[0] == del_usn:
-                    found = True
-                else:
-                    temp.append(line)
-
-            f.close()
-
-            f = open("student.txt", "w")
-
-            for record in temp:
-                f.write(record)
-
-            f.close()
-
-            if found:
-                print("Record Deleted Successfully")
-            else:
-                print("Student Not Found")
-
-        except:
-            print("No Records Found")
+            print("Student Not Found")
 
     # UPDATE STUDENT
-    elif ch == 5:
-
-        update_usn = input("Enter USN to Update: ")
-
-        found = False
-
-        try:
-
-            f = open("student.txt", "r")
-
-            temp = []
-
-            for line in f:
-
-                data = line.strip().split(",")
-
-                if data[0] == update_usn:
-
-                    found = True
-
-                    print("""
-                    1. Update Name
-                    2. Update Branch
-                    3. Update Phone
-                    """)
-
-                    choice = int(input("Enter Choice: "))
-
-                    if choice == 1:
-                        data[1] = input("Enter New Name: ")
-
-                    elif choice == 2:
-                        data[2] = input("Enter New Branch: ")
-
-                    elif choice == 3:
-                        data[3] = input("Enter New Phone: ")
-
-                    line = ",".join(data) + "\n"
-
-                temp.append(line)
-
-            f.close()
-
-            f = open("student.txt", "w")
-
-            for record in temp:
-                f.write(record)
-
-            f.close()
-
-            if found:
-                print("Record Updated Successfully")
-            else:
-                print("Student Not Found")
-
-        except:
-            print("No Records Found")
-
-    # COUNT STUDENTS
     elif ch == 6:
 
-        try:
+        update_usn = input("Enter USN: ")
 
-            f = open("student.txt", "r")
+        cur.execute(
+            "SELECT * FROM Student WHERE USN=?",
+            (update_usn,)
+        )
 
-            count = 0
+        data = cur.fetchone()
 
-            for line in f:
-                count += 1
+        if data:
 
-            f.close()
+            print("""
+            1. Update Name
+            2. Update Branch
+            3. Update Phone
+            """)
 
-            print("Total Students =", count)
+            try:
+                choice = int(input("Enter Choice: "))
+            except:
+                print("Invalid Choice")
+                continue
 
-        except:
-            print("No Records Found")
+            if choice == 1:
 
-    # DISPLAY STUDENTS BY BRANCH
+                new_name = input("Enter New Name: ")
+
+                cur.execute(
+                    "UPDATE Student SET Name=? WHERE USN=?",
+                    (new_name, update_usn)
+                )
+
+            elif choice == 2:
+
+                new_branch = input("Enter New Branch: ")
+
+                cur.execute(
+                    "UPDATE Student SET Branch=? WHERE USN=?",
+                    (new_branch, update_usn)
+                )
+
+            elif choice == 3:
+
+                new_phone = input("Enter New Phone: ")
+
+                cur.execute(
+                    "UPDATE Student SET Phone=? WHERE USN=?",
+                    (new_phone, update_usn)
+                )
+
+            else:
+
+                print("Invalid Choice")
+                continue
+
+            con.commit()
+
+            print("Record Updated Successfully")
+
+        else:
+
+            print("Student Not Found")
+
+    # COUNT STUDENTS
     elif ch == 7:
+
+        cur.execute("SELECT COUNT(*) FROM Student")
+
+        count = cur.fetchone()[0]
+
+        print("Total Students =", count)
+
+    # DISPLAY BY BRANCH
+    elif ch == 8:
 
         branch = input("Enter Branch: ")
 
-        found = False
+        cur.execute(
+            "SELECT * FROM Student WHERE Branch=?",
+            (branch,)
+        )
 
-        try:
+        data = cur.fetchall()
 
-            f = open("student.txt", "r")
+        if len(data) == 0:
 
-            for line in f:
+            print("No Students Found")
 
-                data = line.strip().split(",")
+        else:
 
-                if data[2].lower() == branch.lower():
+            for i in data:
 
-                    found = True
-
-                    print(line)
-
-            f.close()
-
-            if found == False:
-                print("No Students Found")
-
-        except:
-            print("No Records Found")
+                print("----------------------------")
+                print("USN    :", i[0])
+                print("Name   :", i[1])
+                print("Branch :", i[2])
+                print("Phone  :", i[3])
+                print("----------------------------")
 
     # EXIT
-    elif ch == 8:
+    elif ch == 9:
 
         print("Thank You")
         break
 
     else:
+
         print("Invalid Choice")
+
+con.close()
