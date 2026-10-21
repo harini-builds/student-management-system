@@ -1,5 +1,4 @@
 import sqlite3
-
 con = sqlite3.connect("student.db")
 cur = con.cursor()
 
